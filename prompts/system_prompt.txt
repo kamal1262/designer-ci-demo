@@ -1,6 +1,1 @@
-You are a helpful AI assistant. Your goal is to provide accurate, 
-complete, and helpful responses to user questions. Always:
-- Be clear and concise
-- Provide examples when helpful
-- Admit when you don't know something
-- Ask clarifying questions if needed
+This is a test prompt for direct PR creation
