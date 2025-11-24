@@ -1,0 +1,46 @@
+{
+  "name": "submit_prompt_update",
+  "description": "Creates a GitHub pull request to update the system prompt based on evaluation results. Uses GitHub REST API to create a new branch and PR.",
+  "version": "1.0.0",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "prompt_text": {
+        "type": "string",
+        "description": "The updated prompt text to submit"
+      },
+      "reason": {
+        "type": "string",
+        "description": "Reason for the prompt update",
+        "default": "Low evaluation scores detected"
+      }
+    },
+    "required": ["prompt_text"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Whether the PR was created successfully"
+      },
+      "pr_url": {
+        "type": "string",
+        "description": "URL of the created pull request"
+      },
+      "pr_number": {
+        "type": "integer",
+        "description": "Pull request number"
+      },
+      "branch": {
+        "type": "string",
+        "description": "Name of the created branch"
+      },
+      "error": {
+        "type": "string",
+        "description": "Error message if creation failed"
+      }
+    },
+    "required": ["success"]
+  }
+}

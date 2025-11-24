@@ -1,0 +1,19 @@
+[project]
+name = "mcp-server-demo"
+version = "0.1.0"
+description = "CI for Designer"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.6.0",
+    "boto3>=1.34.0",
+    "aws-lambda-powertools>=2.30.0",
+    "strands-agents>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]

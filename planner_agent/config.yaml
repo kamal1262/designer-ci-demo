@@ -1,0 +1,31 @@
+# Planner Agent Configuration
+# MCP Server endpoints and settings
+
+mcp_servers:
+  query_server:
+    name: "query_conversations"
+    endpoint: "${MCP_QUERY_URL}"
+    description: "Retrieves latest chatbot conversations"
+    
+  evaluation_server:
+    name: "evaluate_response"
+    endpoint: "${MCP_EVAL_URL}"
+    description: "Evaluates chatbot responses using Claude 3 Sonnet"
+    
+  github_server:
+    name: "submit_prompt_update"
+    endpoint: "${MCP_GITHUB_URL}"
+    description: "Creates GitHub pull requests for prompt updates"
+
+aws:
+  region: "${AWS_REGION:-us-east-1}"
+  bedrock_model_id: "${BEDROCK_MODEL_ID:-anthropic.claude-3-sonnet-20240229-v1:0}"
+
+agent:
+  temperature: 0.3
+  top_p: 0.8
+  max_tokens: 4096
+  
+thresholds:
+  low_score: 3
+  min_conversations: 5

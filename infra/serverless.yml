@@ -1,0 +1,165 @@
+service: mcp-serverless-agent
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: ${env:AWS_REGION, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 30
+  architecture: arm64
+  
+  environment:
+    AWS_REGION: ${env:AWS_REGION, 'us-east-1'}
+  
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: '*'
+
+functions:
+  # MCP Server 1 - Query Conversations
+  queryServer:
+    name: mcp-query-server
+    image:
+      uri: ${env:AWS_ACCOUNT_ID}.dkr.ecr.${env:AWS_REGION}.amazonaws.com/mcp-query-server:latest
+    url: true
+    events:
+      - httpApi:
+          path: /query
+          method: post
+
+  # MCP Server 2 - Evaluation
+  evaluationServer:
+    name: mcp-evaluation-server
+    image:
+      uri: ${env:AWS_ACCOUNT_ID}.dkr.ecr.${env:AWS_REGION}.amazonaws.com/mcp-evaluation-server:latest
+    url: true
+    environment:
+      BEDROCK_MODEL_ID: ${env:BEDROCK_MODEL_ID}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - bedrock:InvokeModel
+        Resource: '*'
+    events:
+      - httpApi:
+          path: /evaluate
+          method: post
+
+  # MCP Server 3 - GitHub PR
+  githubServer:
+    name: mcp-github-server
+    image:
+      uri: ${env:AWS_ACCOUNT_ID}.dkr.ecr.${env:AWS_REGION}.amazonaws.com/mcp-github-server:latest
+    url: true
+    environment:
+      GITHUB_TOKEN: ${env:GITHUB_TOKEN}
+      GITHUB_REPO: ${env:GITHUB_REPO}
+    events:
+      - httpApi:
+          path: /submit-pr
+          method: post
+
+resources:
+  Resources:
+    # ECR Repositories
+    QueryServerRepository:
+      Type: AWS::ECR::Repository
+      Properties:
+        RepositoryName: mcp-query-server
+        ImageScanningConfiguration:
+          ScanOnPush: true
+        LifecyclePolicy:
+          LifecyclePolicyText: |
+            {
+              "rules": [{
+                "rulePriority": 1,
+                "description": "Keep last 5 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": { "type": "expire" }
+              }]
+            }
+    
+    EvaluationServerRepository:
+      Type: AWS::ECR::Repository
+      Properties:
+        RepositoryName: mcp-evaluation-server
+        ImageScanningConfiguration:
+          ScanOnPush: true
+        LifecyclePolicy:
+          LifecyclePolicyText: |
+            {
+              "rules": [{
+                "rulePriority": 1,
+                "description": "Keep last 5 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": { "type": "expire" }
+              }]
+            }
+    
+    GithubServerRepository:
+      Type: AWS::ECR::Repository
+      Properties:
+        RepositoryName: mcp-github-server
+        ImageScanningConfiguration:
+          ScanOnPush: true
+        LifecyclePolicy:
+          LifecyclePolicyText: |
+            {
+              "rules": [{
+                "rulePriority": 1,
+                "description": "Keep last 5 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": { "type": "expire" }
+              }]
+            }
+
+  Outputs:
+    QueryServerUrl:
+      Description: "Query Server Function URL"
+      Value:
+        Fn::GetAtt:
+          - QueryServerLambdaFunctionUrl
+          - FunctionUrl
+    
+    EvaluationServerUrl:
+      Description: "Evaluation Server Function URL"
+      Value:
+        Fn::GetAtt:
+          - EvaluationServerLambdaFunctionUrl
+          - FunctionUrl
+    
+    GithubServerUrl:
+      Description: "GitHub Server Function URL"
+      Value:
+        Fn::GetAtt:
+          - GithubServerLambdaFunctionUrl
+          - FunctionUrl
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    layer: false
